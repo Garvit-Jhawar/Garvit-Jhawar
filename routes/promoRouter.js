@@ -1,54 +1,112 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const Promotion = require("../models/promotions");
 
 const promoRouter = express.Router();
 promoRouter.use(bodyParser.json());
 promoRouter
   .route("/")
-  .all(function (req, res, next) {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/plain");
-    next();
-  })
-
   .get(function (req, res, next) {
-    res.end("Will send all the PROMOTIONS! to you");
+    Promotion.find({})
+      .then(
+        (promotion) => {
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json");
+          res.json(promotion);
+        },
+        (err) => {
+          next(err);
+        }
+      )
+      .catch((err) => {});
   })
 
   .post(function (req, res, next) {
-    res.end(
-      `will add the Promotions : ${req.body.name} and ${req.body.description}`
-    );
+    Promotion.create(req.body)
+      .then(
+        (promotion) => {
+          console.log("Promotion Created : ", promotion);
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json");
+          res.json(promotion);
+        },
+        (err) => {
+          next(err);
+        }
+      )
+      .catch((err) => {});
   })
 
   .put(function (req, res, next) {
     res.end("PUT is not supported on PROMOTIONS here right now");
   })
   .delete(function (req, res, next) {
-    res.end("Deleted the specified PROMOTION");
+    Promotion.remove({})
+      .then(
+        (promotion) => {
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json");
+          res.json(promotion);
+        },
+        (err) => {
+          next(err);
+        }
+      )
+      .catch((err) => {});
   });
-
 ///////////second route/////////////////////
 ////////////////////////////////////////////
 promoRouter
   .route("/:promoID")
-  .all(function (req, res, next) {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/plain");
-    next();
-  })
   .get(function (req, res, next) {
-    res.end("Will send PROMOTION with id " + req.params.promoID);
+    Promotion.findById(req.params.promoID)
+      .then(
+        (promotion) => {
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json");
+          res.json(promotion);
+        },
+        (err) => {
+          next(err);
+        }
+      )
+      .catch((err) => {});
   })
 
   .post(function (req, res, next) {
-    res.end(`will add the PROMOTION with ID ${req.params.promoID}`);
+    res.end(`Post is not availabe on PROMOTION with ID ${req.params.promoID}`);
   })
   .put(function (req, res, next) {
-    res.end("PUT is called on PROMOTIONID " + req.params.promoID);
+    Promotion.findByIdAndUpdate(
+      req.params.promoID,
+      { $set: req.body },
+      { new: true }
+    )
+      .then(
+        (promotion) => {
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json");
+          res.json(promotion);
+        },
+        (err) => {
+          next(err);
+        }
+      )
+      .catch((err) => {});
   })
   .delete(function (req, res, next) {
-    res.end("Deleted the specified PROMOTION with the id " + req.params.promoID);
+    Promotion.findByIdAndDelete(req.params.promoID)
+      .then(
+        (dish) => {
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json");
+          res.json(dish);
+        },
+        (err) => {
+          next(err);
+        }
+      )
+      .catch((err) => {});
   });
 
 module.exports = promoRouter;
