@@ -33,30 +33,46 @@ app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser("12345-67890-09876-54321"));
 
 const auth = function (req, res, next) {
-  console.log(req.headers);
-  var authHeaders = req.headers.authorization;
-  if (!authHeaders) {
-    var err = new Error("You are not authenticated");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
-    return next(err);
-  }
+  console.log(req.signedCookies);
+  if (!req.signedCookies.user) {
+    var authHeaders = req.headers.authorization;
+    if (!authHeaders) {
+      var err = new Error("You are not authenticated");
+      res.setHeader("WWW-Authenticate", "Basic");
+      err.status = 401;
+      return next(err);
+    }
 
-  var auth = new Buffer(authHeaders.split(" ")[1], "base64")
-    .toString()
-    .split(":");
-  var username = auth[0];
-  var password = auth[1];
-  if (username === "admin" && password === "password") {
-    next();
+    var auth = new Buffer.from(authHeaders.split(" ")[1], "base64")
+      .toString()
+      .split(":");
+    var username = auth[0];
+    var password = auth[1];
+    if (username === "admin" && password === "password") {
+      res.cookie("user", "admin", {
+        signed: true,
+      });
+      next();
+    } else {
+      var err = new Error("The username and password are incorrect");
+      res.setHeader("WWW-Authenticate", "Basic");
+      err.status = 401;
+      return next(err);
+    }
   } else {
-    var err = new Error("The username and password are incorrect");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
-    return next(err);
+    if (req.signedCookies.user === "admin") {
+      next();
+    } else {
+      var err = new Error(
+        "The Cookies are incorrect please authenticate yourself"
+      );
+
+      err.status = 401;
+      return next(err);
+    }
   }
 };
 app.use(auth);
